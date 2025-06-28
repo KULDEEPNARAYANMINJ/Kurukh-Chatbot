@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fulmati - Kurukh Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0f2c 0%, #1a223f 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: #fff;
+        }
+        .chat-container {
+            max-width: 520px;
+            margin: 48px auto 0 auto;
+            background: rgba(10, 15, 44, 0.95);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.45), 0 1.5px 0 #1e2a4a;
+            padding: 32px 24px 24px 24px;
+            border: 1.5px solid #1e2a4a;
+            position: relative;
+            overflow: hidden;
+        }
+        .chat-container:before {
+            content: '';
+            position: absolute;
+            top: -80px; left: -80px;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, #1e90ff55 0%, transparent 80%);
+            z-index: 0;
+        }
+        .chat-container h2 {
+            font-family: 'Orbitron', Arial, sans-serif;
+            font-size: 2.1rem;
+            letter-spacing: 2px;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 18px;
+            text-shadow: 0 0 8px #1e90ff88, 0 2px 8px #000;
+        }
+        .chat-log {
+            height: 370px;
+            overflow-y: auto;
+            border: 1.5px solid #1e2a4a;
+            border-radius: 10px;
+            padding: 16px 12px;
+            background: rgba(0,0,0,0.7);
+            margin-bottom: 18px;
+            box-shadow: 0 2px 12px 0 #0a0f2c44;
+        }
+        .chat-message {
+            margin: 14px 0;
+            display: flex;
+            align-items: flex-start;
+        }
+        .user {
+            color: #1e90ff;
+            font-weight: 700;
+            text-shadow: 0 0 4px #1e90ff44;
+        }
+        .bot {
+            color: #fff;
+            font-weight: 700;
+            text-shadow: 0 0 8px #1e90ff99, 0 2px 8px #000;
+        }
+        .bot-label {
+            color: #1e90ff;
+            font-family: 'Orbitron', Arial, sans-serif;
+            font-size: 1.05em;
+            margin-right: 6px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px #1e90ff99;
+        }
+        .input-row {
+            display: flex;
+            margin-top: 8px;
+        }
+        .input-row input {
+            flex: 1;
+            padding: 13px 14px;
+            border: none;
+            border-radius: 8px;
+            background: #181e36;
+            color: #fff;
+            font-size: 1.08em;
+            outline: none;
+            box-shadow: 0 0 8px #1e90ff22 inset;
+            transition: box-shadow 0.2s;
+        }
+        .input-row input:focus {
+            box-shadow: 0 0 12px #1e90ff88;
+        }
+        .input-row button {
+            padding: 0 28px;
+            margin-left: 10px;
+            border: none;
+            background: linear-gradient(90deg, #1e90ff 0%, #0a0f2c 100%);
+            color: #fff;
+            border-radius: 8px;
+            font-size: 1.08em;
+            font-family: 'Orbitron', Arial, sans-serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 0 8px #1e90ff55;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .input-row button:hover {
+            background: linear-gradient(90deg, #0a0f2c 0%, #1e90ff 100%);
+            box-shadow: 0 0 16px #1e90ff99;
+        }
+        .explanation {
+            color: #b0cfff;
+            font-size: 0.98em;
+            margin-top: 4px;
+            font-family: 'Roboto', Arial, sans-serif;
+            background: rgba(30, 144, 255, 0.08);
+            border-left: 3px solid #1e90ff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            box-shadow: 0 0 8px #1e90ff22;
+        }
+        ::selection {
+            background: #1e90ff44;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h2>Fulmati</h2>
+        <div class="chat-log" id="chat-log"></div>
+        <form id="chat-form" class="input-row" autocomplete="off">
+            <input type="text" id="user-input" placeholder="Type your message..." required />
+            <button type="submit">Send</button>
+        </form>
+    </div>
+    <script>
+        // Expanded Kurukh-English dictionary
+        const dictionary = [
+            // ... (same as previous version) ...
+        ];
+        const explanations = [
+            // ... (same as previous version) ...
+        ];
+        const fallbackKurukh = [
+            "Endra hoon mala", "Ajjam dau", "Ha'an", "Malla", "Sithem?", "Daw makha"
+        ];
+        function findKurukhReply(input) {
+            input = input.trim().toLowerCase();
+            for (const entry of dictionary) {
+                if (entry.english.toLowerCase() === input) return entry.kurukh;
+            }
+            for (const entry of dictionary) {
+                if (entry.kurukh.toLowerCase() === input) return entry.kurukh;
+            }
+            for (const entry of dictionary) {
+                if (entry.english.toLowerCase().includes(input)) return entry.kurukh;
+                if (entry.kurukh.toLowerCase().includes(input)) return entry.kurukh;
+            }
+            const words = input.split(/\s+/);
+            for (const word of words) {
+                for (const entry of dictionary) {
+                    if (entry.english.toLowerCase() === word) return entry.kurukh;
+                    if (entry.kurukh.toLowerCase() === word) return entry.kurukh;
+                }
+            }
+            for (const word of words) {
+                for (const entry of dictionary) {
+                    if (entry.english.toLowerCase().includes(word)) return entry.kurukh;
+                    if (entry.kurukh.toLowerCase().includes(word)) return entry.kurukh;
+                }
+            }
+            return fallbackKurukh[Math.floor(Math.random() * fallbackKurukh.length)];
+        }
+        function findExplanation(input) {
+            input = input.trim().toLowerCase();
+            for (const exp of explanations) {
+                for (const keyword of exp.keywords) {
+                    if (input.includes(keyword)) {
+                        return exp.text;
+                    }
+                }
+            }
+            return null;
+        }
+        const chatLog = document.getElementById('chat-log');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        function appendMessage(sender, text, isExplanation = false) {
+            const div = document.createElement('div');
+            div.className = 'chat-message ' + sender;
+            if (isExplanation) {
+                div.innerHTML = `<span class=\"explanation\">${text.replace(/\\n/g, '<br>')}</span>`;
+            } else {
+                if (sender === 'bot') {
+                    div.innerHTML = `<span class=\"bot-label\">Fulmati:</span> ${text}`;
+                } else {
+                    div.innerHTML = `<strong class=\"${sender}\">${sender === 'user' ? 'You' : 'Fulmati'}:</strong> ${text}`;
+                }
+            }
+            chatLog.appendChild(div);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = userInput.value;
+            appendMessage('user', input);
+            let response = findKurukhReply(input);
+            let explanation = findExplanation(input);
+            appendMessage('bot', response);
+            if (explanation) {
+                appendMessage('bot', explanation, true);
+            }
+            userInput.value = '';
+        });
+    </script>
+</body>
+</html>
